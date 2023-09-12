@@ -89,6 +89,37 @@ func (d *Docx) SetContent(content string) {
 	d.content = content
 }
 
+func (d *Docx) CheckForLabel(label string, labelAfter bool) (err error) {
+	encodedLabel, err := encode(label)
+	if err != nil {
+		return err
+	}
+
+	labelIndex := strings.Index(d.content, encodedLabel)
+	if labelIndex == -1 {
+		return errors.New("Label " + label + " not found")
+	}
+
+	checkBoxIndex := -1
+
+	if labelAfter {
+		checkBoxIndex = strings.LastIndex(d.content[:labelIndex], "<w:checkBox>")
+	} else {
+		checkBoxIndex = strings.Index(d.content[labelIndex:], "<w:checkBox>")
+		checkBoxIndex += labelIndex
+	}
+
+	if checkBoxIndex == -1 {
+		return errors.New("Checkbox not found for label " + label)
+	}
+
+	checkBoxIndex += len("<w:checkBox>")
+
+	d.content = d.content[:checkBoxIndex] + "<w:checked />" + d.content[checkBoxIndex+1:]
+
+	return nil
+}
+
 func (d *Docx) ReplaceRaw(oldString string, newString string, num int) {
 	d.content = strings.Replace(d.content, oldString, newString, num)
 }
