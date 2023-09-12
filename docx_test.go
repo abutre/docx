@@ -11,6 +11,8 @@ import (
 
 const testFile = "./TestDocument.docx"
 const testFileResult = "./TestDocumentResult.docx"
+const labelBeforeCheckbox = "Label before checkbox"
+const labelAfterCheckbox = "Label after checkbox"
 
 func loadFile(file string) *Docx {
 	r, err := ReadDocxFile(file)
@@ -43,13 +45,13 @@ func loadFromFs(file string) *Docx {
 	return r.Editable()
 }
 
-//Tests that we are able to load a file from a filesystem and do a quick replacement test
+// Tests that we are able to load a file from a filesystem and do a quick replacement test
 func TestReadDocxFromFS(t *testing.T) {
 	d := loadFromFs(testFile)
 	simpleReplacementTest(d, t)
 }
 
-//Tests that we are able to load a file from a memory array of bytes
+// Tests that we are able to load a file from a memory array of bytes
 func TestReadDocxFromMemory(t *testing.T) {
 	d := loadFromMemory(testFile)
 	simpleReplacementTest(d, t)
@@ -198,5 +200,25 @@ func TestDocx_ImagesLen(t *testing.T) {
 
 	if d.ImagesLen() != 1 {
 		t.Error("Expected the sum of images is 1, got something else")
+	}
+}
+
+func TestCheckboxAfterLabel(t *testing.T) {
+	d := loadFile(testFile)
+	err := d.CheckForLabel(labelBeforeCheckbox, false)
+	if err != nil {
+		t.Error(err)
+	} else {
+		d.WriteToFile(testFileResult)
+	}
+}
+
+func TestCheckboxBeforeLabel(t *testing.T) {
+	d := loadFile(testFile)
+	err := d.CheckForLabel(labelBeforeCheckbox, true)
+	if err != nil {
+		t.Error(err)
+	} else {
+		d.WriteToFile(testFileResult)
 	}
 }
