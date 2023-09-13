@@ -89,6 +89,32 @@ func (d *Docx) SetContent(content string) {
 	d.content = content
 }
 
+func (d *Docx) SelectAfterLabel(label string, value string) (err error) {
+	encodedLabel, err := encode(label)
+	if err != nil {
+		return err
+	}
+
+	labelIndex := strings.Index(d.content, encodedLabel)
+	if labelIndex == -1 {
+		return errors.New("Label " + label + " not found")
+	}
+
+	selectStartIndex := strings.Index(d.content[labelIndex:], "<w:ddList>")
+
+	if selectStartIndex == -1 {
+		return errors.New("Start of select not found for label " + label)
+	}
+
+	selectStartIndex += labelIndex
+	selectStartIndex += len("<w:ddList>")
+
+	//selectEndIndex -= len("<w:listEntry w:val=")
+	d.content = d.content[:selectStartIndex] + "<w:result w:val=\"" + value + "\"/>" + d.content[selectStartIndex+1:]
+
+	return nil
+}
+
 func (d *Docx) CheckForLabel(label string, labelAfter bool) (err error) {
 	encodedLabel, err := encode(label)
 	if err != nil {
@@ -103,9 +129,9 @@ func (d *Docx) CheckForLabel(label string, labelAfter bool) (err error) {
 	checkBoxIndex := -1
 
 	if labelAfter {
-		checkBoxIndex = strings.LastIndex(d.content[:labelIndex], "<w:checkBox>")
+		checkBoxIndex = strings.LastIndex(d.content[:labelIndex], "</w:checkBox>")
 	} else {
-		checkBoxIndex = strings.Index(d.content[labelIndex:], "<w:checkBox>")
+		checkBoxIndex = strings.Index(d.content[labelIndex:], "</w:checkBox>")
 		checkBoxIndex += labelIndex
 	}
 
@@ -113,9 +139,7 @@ func (d *Docx) CheckForLabel(label string, labelAfter bool) (err error) {
 		return errors.New("Checkbox not found for label " + label)
 	}
 
-	checkBoxIndex += len("<w:checkBox>")
-
-	d.content = d.content[:checkBoxIndex] + "<w:checked />" + d.content[checkBoxIndex+1:]
+	d.content = d.content[:checkBoxIndex] + "<w:checked/>" + d.content[checkBoxIndex:]
 
 	return nil
 }
