@@ -1,4 +1,4 @@
-package docxx
+package docx
 
 import (
 	"archive/zip"
